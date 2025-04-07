@@ -1,0 +1,118 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Registration</title>
+    <style>
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <form id="userForm">
+        <div>
+            <label>Name:</label>
+            <input type="text" id="name" required>
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="email" id="email" required>
+            <span id="emailError" class="error"></span>
+        </div>
+        <div>
+            <label>Phone:</label>
+            <input type="tel" id="phone" required>
+        </div>
+        <div>
+            <label>Age:</label>
+            <input type="number" id="age" required>
+        </div>
+        <div>
+            <label>Gender:</label>
+            <select id="gender" required>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="userList"></div>
+
+    <script>
+        document.getElementById('email').addEventListener('input', function(e) {
+            const email = e.target.value;
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!emailRegex.test(email)) {
+                emailError.textContent = 'Please enter a valid email address';
+            } else {
+                emailError.textContent = '';
+            }
+        });
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                age: parseInt(document.getElementById('age').value),
+                gender: document.getElementById('gender').value
+            };
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save user');
+                }
+
+                alert('User saved successfully!');
+                loadUsers(); // Refresh user list
+                e.target.reset(); // Reset form
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        // Function to load and display users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '<h2>Registered Users</h2>';
+                
+                users.forEach(user => {
+                    userList.innerHTML += `
+                        <div>
+                            <p>Name: ${user.name}</p>
+                            <p>Email: ${user.email}</p>
+                            <p>Age: ${user.age}</p>
+                            <p>Gender: ${user.gender}</p>
+                            <hr>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error('Error loading users:', err);
+            }
+        }
+
+        // Load users when page loads
+        loadUsers();
+    </script>
+</body>
+</html>
